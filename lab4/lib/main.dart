@@ -1,40 +1,36 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:share_plus/share_plus.dart';
+import 'package:share/share.dart';
+import 'package:map_launcher/map_launcher.dart';
 
 void main() {
   runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  const MyApp({Key? key}) : super(key: key);
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      title: 'Общежития КубГАУ',
       theme: ThemeData(
         primarySwatch: Colors.green,
       ),
-      home: const MyHomePage(title: 'Город Краснодар'),
+      home: const MyHomePage(),
     );
   }
 }
 
 class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
-  final String title;
+  const MyHomePage({Key? key}) : super(key: key);
 
   @override
   State<MyHomePage> createState() => _MyHomePageState();
 }
 
- /*String phoneNumba = 'tel:+79281337228';*/
-  /*String location = 'https://yandex.ru/maps/-/CDFo48pC';*/
-
-  class _MyHomePageState extends State<MyHomePage> {
-  int _likeCount = 1;
+class _MyHomePageState extends State<MyHomePage> {
+  int _likeCount = 100;
   bool _isLiked = false;
 
   void _toggleLike() {
@@ -48,130 +44,152 @@ class MyHomePage extends StatefulWidget {
     });
   }
 
-  void _sharePressed() { // share function using share_plus
-    Share.share('https://yandex.ru/maps/-/CDFo48pC');
+  void _callNumber() async {
+    final Uri url = Uri(
+      scheme: 'tel',
+      path: "999 228 1337",
+    );
+    if (await canLaunchUrl(url)) {
+      await launchUrl(url);
+    } else {
+      throw 'Не удалось совершить вызов.';
+    }
+  }
+
+  void _openMap() async {
+    final availableMaps = await MapLauncher.installedMaps;
+    availableMaps.forEach((map) {
+      print(map.icon);
+      print(map.mapName);
+      print(map.mapType);
+    });
+
+    // Выбираем первую доступную карту для открытия маркера
+    if (availableMaps.isNotEmpty) {
+      final firstMap = availableMaps.first;
+      await firstMap.showMarker(
+        coords: Coords(45.05030190357135, 38.92076165803231),
+        title: "Общежитие №20",
+        zoom: 50,
+      );
+    }
+  }
+
+  void _share() {
+    const String text = 'Посетите общежитие №20';
+    const String url = 'https://www.kubsau.ru/';
+    Share.share('$text\n$url');
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.title),
+        title: const Text(
+          'Общежития КубГАУ',
+          style: TextStyle(color: Colors.white),
+        ),
+        backgroundColor: Colors.green,
       ),
-      body: ListView( // listview so it scrolls
-        children: [
-          Image.asset('assets/22.jpg'), 
-          Expanded(
-            child:
-            Padding( // padding so it looks better
-              padding: const EdgeInsets.only(top: 10.0),
-              child:
-              Row( // row with basic info
-                mainAxisSize: MainAxisSize.min,
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      body: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Image.asset(
+              'assets/images/2019-01-21.jpg',
+              fit: BoxFit.cover,
+            ),
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Column(
-                    children: const [
-                      Text(
-                        'Краснодар, Россия',
-                        style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 20),
-                      ),
-                      Text(
-                        'Население: 1,020,567',
-                        style: TextStyle(color: Colors.grey),
-                      )
-                    ],
+                  const Text(
+                    'Общежитие №20',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
-                  Row( // the like button and a counter for it
-                    mainAxisSize: MainAxisSize.min,
+                  const SizedBox(height: 8),
+                  const Text(
+                    'Краснодар, ул. Калинина 13',
+                    style: TextStyle(
+                      color: Colors.grey,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
                     children: [
                       IconButton(
                         onPressed: _toggleLike,
-                        color: Colors.red,
-                        icon: Icon(_isLiked ? Icons.favorite : Icons.favorite_border),
-                        ),
-                    
+                        icon: Icon(
+                            _isLiked ? Icons.favorite : Icons.favorite_border),
+                        color: _isLiked ? Colors.red : Colors.grey,
+                      ),
                       Text(
-                      '$_likeCount'
-                    )]
-                  )
+                        '$_likeCount', // Количество лайков
+                        style: const TextStyle(
+                          fontSize: 16,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: [
+                      Column(
+                        children: [
+                          IconButton(
+                            onPressed: _callNumber,
+                            icon: const Icon(Icons.phone, color: Colors.green),
+                          ),
+                          const Text(
+                            'Позвонить',
+                            style: TextStyle(color: Colors.black, fontSize: 12),
+                          ),
+                        ],
+                      ),
+                      Column(
+                        children: [
+                          IconButton(
+                            onPressed: _openMap,
+                            icon: const Icon(Icons.directions,
+                                color: Colors.green),
+                          ),
+                          const Text(
+                            'Маршрут',
+                            style: TextStyle(color: Colors.black, fontSize: 12),
+                          ),
+                        ],
+                      ),
+                      Column(
+                        children: [
+                          IconButton(
+                            onPressed: _share,
+                            icon: const Icon(Icons.share, color: Colors.green),
+                          ),
+                          const Text(
+                            'Поделиться',
+                            style: TextStyle(color: Colors.black, fontSize: 12),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  const Text(
+                    'Студенческий городок или так называемый кампус Кубанского ГАУ состоит из двадцати общежитий, в которых проживает более 8000 студентов, что составляет 96% от всех нуждающихся. Студенты первого курса обеспечены местами в общежитии полностью. В соответствии с Положением о студенческих общежитиях университета, при поселении между администрацией и студентами заключается договор найма жилого помещения. Воспитательная работа в общежитиях направлена на улучшение быта, соблюдение правил внутреннего распорядка, отсутствия асоциальных явлений в молодежной среде. Условия проживания в общежитиях университетского кампуса полностью отвечают санитарным нормам и требованиям: наличие оборудованных кухонь, душевых комнат, прачечных, читальных залов, комнат самоподготовки, помещений для заседаний студенческих советов и наглядной агитации. С целью улучшения условий быта студентов активно работает система студенческого самоуправления - студенческие советы организуют всю работу по самообслуживанию.',
+                    textAlign: TextAlign.justify,
+                  ),
                 ],
-              )
-            )
-          ),
-          Expanded( // three buttons with some functionality
-              child:
-              Padding(
-                  padding: const EdgeInsets.only(top: 10.0),
-                  child:
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        Column(
-                          children: [
-                            IconButton(
-                              icon: const Icon(Icons.phone),
-                              onPressed: () => launchUrl(
-                                Uri.parse('tel:+7928133728'), // launches the dial app 
-                              ),
-                              color: Colors.green,
-                              ),
-                            const Text(
-                                'Позвонить',
-                                style: TextStyle(color:Colors.green)
-                            )
-                          ],
-                        ),
-                        Column(
-                          children: [
-                            IconButton(
-                              icon: const Icon(Icons.navigation),
-                              onPressed: () => launchUrl(
-                                Uri.parse('https://yandex.ru/maps/-/CDFo48pC'), // launches the link which might be attached to an app able to parse it
-                              ),
-                              color: Colors.green,
-                            ),
-                            const Text(
-                                'Маршрут',
-                                style: TextStyle(color:Colors.green)
-                            )
-                          ],
-                        ),
-                        Column(
-                          children: [
-                            IconButton(
-                              icon: const Icon(Icons.share),
-                              onPressed: _sharePressed,
-                              color: Colors.green,
-                            ),
-                            const Text(
-                                'Поделиться',
-                                style: TextStyle(color:Colors.green)
-                            )
-                          ],
-                        )
-                      ],
-                    )
-              )
-          ),
-          const Expanded( // the long text to show scrolling possibilities 
-              child:
-              Padding(
-                  padding: EdgeInsets.all(15.0),
-                  child: Text('Краснодар в прошлом – Екатеринодар) – один из крупнейших городов'
-                      ' российского Юга, расположившийся на берегу реки Кубани. Город с '
-                      'неповторимыми достопримечательностями. В Краснодаре живёт более '
-                      '1.000.000 человек что сравнимо, например, с населением Дании. '
-                      'Город поделён на четыре округа – Центральный, Западный, Прикубанский и Карасунский. '
-                      'С самого основания города главная улица называлась Красной, это название не'
-                      'было изменено и в годы советской власти. История Краснодара насчитывает'
-                      ' более двух сотен лет.')
-              )
-          )
-        ]
-      )
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
